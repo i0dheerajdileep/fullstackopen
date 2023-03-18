@@ -4,11 +4,14 @@ import Form from './components/Form'
 import Persons from './components/Persons'
 import Filter from './components/Filter'
 import service from './components/service/servicepersons'
+import Message from './components/Message'
+
 function App() {
   const [persons,setPersons] = useState([''])
   const [newName,setNewName] = useState('')
   const [newNumber,setNewNumber] = useState('')
   const [newFilter, setNewFilter] = useState('')
+  const [message,setMessage] = useState('')
   useEffect(() => {
     async function fetchData() {
       try {
@@ -32,6 +35,9 @@ function App() {
             setPersons(persons.map((personItem) => personItem.id !== personToAdd.id ? personItem : returnedPerson))
             setNewName('')
             setNewNumber('')
+            setMessage(
+              `${updatedPerson.name} was successfully updated`
+            )
           } catch (error) {
             console.error(error)
           }
@@ -43,6 +49,9 @@ function App() {
           setPersons([...persons, returnedPerson]);
           setNewName('');
           setNewNumber('');
+          setMessage(
+            `${newName} was successfully added`
+          )
         } catch (error) {
           console.error(error);
         }
@@ -62,9 +71,9 @@ function App() {
         .catch((error) => {
           console.error(error);
         });
-        setTimeout(() => {
-          alert( `${personName} was succesfully deleted`)
-        }, 500)
+        setMessage(
+          `${personName} was successfully deleted`
+        )
         
     
 
@@ -80,6 +89,7 @@ function App() {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Message message={message}/>
       <Filter value={newFilter} handleFilter={handleFilter}/>
       <h2>Add a new</h2>
       <Form newNumber={newNumber} newName={newName} handleAddPerson={handleAddPerson} setNewName={setNewName} setNewNumber={setNewNumber}/>
