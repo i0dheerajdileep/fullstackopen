@@ -1,29 +1,76 @@
-import {useState,React} from 'react'
+import {useState,React,useEffect} from 'react'
+import axios from 'axios'
 import Form from './components/Form'
 import Persons from './components/Persons'
 import Filter from './components/Filter'
+import service from './components/service/servicepersons'
 function App() {
-  const [persons,setPersons] = useState([{ name: 'Arto Hellas', number: '040-123456', id: 1 },
-  { name: 'Ada Lovelace', number: '39-44-5323523', id: 2 },
-  { name: 'Dan Abramov', number: '12-43-234345', id: 3 },
-  { name: 'Mary Poppendieck', number: '39-23-6423122', id: 4 }])
+  const [persons,setPersons] = useState([''])
   const [newName,setNewName] = useState('')
   const [newNumber,setNewNumber] = useState('')
   const [newFilter, setNewFilter] = useState('')
-  const handleAddPerson=(event)=>{
-    event.preventDefault()
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const response = await axios.get('http://localhost:3001/persons');
+        setPersons(response.data);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    fetchData();
+  }, []);
+
+    const handleAddPerson = async (event) => {
+      event.preventDefault();
+      const personToAdd = persons.find(person=> person.name.toLowerCase()=== newName.toLowerCase())
+      const updatedPerson = { ...personToAdd, number: newNumber }
+      if (persons.some((person) => person.name.toLowerCase() === newName.toLowerCase())) {
+        if (window.confirm(newName + ` is already added to phonebook replace the old number with new one?`)) {
+          try {
+            const returnedPerson = await service.update(updatedPerson.id, updatedPerson)
+            setPersons(persons.map((personItem) => personItem.id !== personToAdd.id ? personItem : returnedPerson))
+            setNewName('')
+            setNewNumber('')
+          } catch (error) {
+            console.error(error)
+          }
+        }
+      } else {
+        const newPerson = { name: newName, number: newNumber };
+        try {
+          const returnedPerson = await service.create(newPerson);
+          setPersons([...persons, returnedPerson]);
+          setNewName('');
+          setNewNumber('');
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    };
+  
+  const handleDeletePerson=(id)=>{
+    const filteredPerson = persons.filter((person)=>person.id===id)
+    const personName = filteredPerson[0].name
+    const personId = filteredPerson[0].id
+    if (window.confirm(`Delete ${personName} ?`)) {
+      service
+        .remove(personId)
+        .then(() => {
+          setPersons(persons.filter((person) => person.id !== id));
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+        setTimeout(() => {
+          alert( `${personName} was succesfully deleted`)
+        }, 500)
         
-    if(persons.some(person => person.name.toLowerCase() === newName.toLowerCase()))
-    {
-      alert(newName+ ` is already added to phonebook`)
-    }
-    else{
-      const newPerson = { name: newName,number: newNumber };
-      setPersons([...persons,newPerson])
-      setNewName('')
-      setNewNumber('')
-    }
+    
+
   }
+}
+  
   const handleFilter=(event)=>{
     setNewFilter(event.target.value)
     const regex = new RegExp( newFilter, 'i' );
@@ -36,7 +83,7 @@ function App() {
       <Filter value={newFilter} handleFilter={handleFilter}/>
       <h2>Add a new</h2>
       <Form newNumber={newNumber} newName={newName} handleAddPerson={handleAddPerson} setNewName={setNewName} setNewNumber={setNewNumber}/>
-      <Persons persons={persons} />
+      <Persons persons={persons}  handleDeletePerson={handleDeletePerson}/>
     </div>
   )
 }
