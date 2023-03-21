@@ -29,7 +29,7 @@ function App() {
   return (
     <div>
       <Form value={newFilter} onChange={handleFilterChange}/>
-      <Content countries={countries}/>
+      <Content countries={countries} setCountries={setCountries}/>
     </div>
   );
 }
