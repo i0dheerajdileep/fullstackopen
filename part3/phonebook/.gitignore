@@ -13,3 +13,4 @@ out/
 *.swp
 .DS_Store
 Thumbs.db
+.env

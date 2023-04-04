@@ -1,9 +1,8 @@
 const mongoose = require('mongoose')
-
+const Person = require('./model/person')
 if (process.argv.length<4) {
   console.log('give password as argument')
 }
-
 const password = process.argv[2]
 const Name = process.argv[3]
 const Number = process.argv[4]
