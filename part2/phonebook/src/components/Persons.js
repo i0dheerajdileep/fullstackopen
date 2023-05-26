@@ -7,7 +7,8 @@ function Persons({persons,handleDeletePerson}) {
       {persons.map((persons,index)=>(
         <div key={index}>
             {/* {console.log(persons.id)} */}
-          {persons.name} : {persons.number} <button onClick={()=>handleDeletePerson(persons.id)}>delete</button>
+          {persons.name} : {persons.number} 
+          <button onClick={()=>handleDeletePerson(persons.id)}>delete</button>
         </div>
       ))
       }
