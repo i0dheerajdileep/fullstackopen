@@ -36,7 +36,7 @@ const mostBlogs = (blogs) => {
   };
 };
 
-onst mostLikes = (blogs) => {
+const mostLikes = (blogs) => {
   const likesCount = lodash(blogs)
     .groupBy("author")
     .map((objs, key) => ({
