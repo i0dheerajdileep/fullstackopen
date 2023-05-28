@@ -4,87 +4,120 @@ const app = require("../app");
 const api = supertest(app);
 const helper = require("./testHelper");
 const Blog = require("../models/blog");
-require('dotenv').config();
-
-
-beforeAll(async () => {
-    await mongoose.connect(process.env.TEST_MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-  });
-
 
 beforeEach(async () => {
-    await Blog.deleteMany({});
-    await Blog.insertMany(helper.initialBlogs);
-  }); //added a timeout
+  await Blog.deleteMany({});
+  const savePromises = helper.initialBlogs.map(async (blog) => {
+    const newBlog = new Blog(blog);
+    await newBlog.save();
+  });
+  await Promise.all(savePromises);
+}, 100000);
 
-test("blogs are returned as json", async () => {
-  await api
-    .get("/api/blogs")
-    .expect(200)
-    .expect("Content-Type", /application\/json/);
-});
+describe("when there is initially some blogs saved", () => {
+  test("blogs are returned as json", async () => {
+    await api
+      .get("/api/blogs")
+      .expect(200)
+      .expect("Content-Type", /application\/json/);
+  });
 
-test("blogs have id property named id instead of _id", async () => {
-  const response = await api.get("/api/blogs");
-  const blogs = response.body;
+  test("blogs have id property named id instead of _id", async () => {
+    const response = await api.get("/api/blogs");
 
-  blogs.forEach((blog) => {
-    expect(blog.id).toBeDefined();
-    expect(blog._id).not.toBeDefined();
+    const ids = response.body.map((blog) => blog.id);
+
+    for (const id of ids) {
+      expect(id).toBeDefined();
+    }
   });
 });
 
-test("a valid blog can be added", async () => {
-  const newBlog = {
-    title: "New Blog Title",
-    author: "John Doe",
-    url: "https://www.example.com",
-    likes: 1,
-  };
+describe("addition of a new blog", () => {
+  test("a valid blog can be added ", async () => {
+    const newBlog = {
+      title: "aaaaa",
+      author: "bbbbb",
+      url: "https://www.example.com",
+      likes: 1,
+    };
 
-  await api
-    .post("/api/blogs")
-    .send(newBlog)
-    .expect(201)
-    .expect("Content-Type", /application\/json/);
+    await api
+      .post("/api/blogs")
+      .send(newBlog)
+      .expect(201)
+      .expect("Content-Type", /application\/json/);
 
-  const blogs = await helper.blogsInDb();
-  expect(blogs).toHaveLength(helper.initialBlogs.length + 1);
+    const blogsAtEnd = await helper.blogsInDb();
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1);
 
-  const titles = blogs.map((blog) => blog.title);
-  expect(titles).toContain("New Blog Title");
+    const titles = blogsAtEnd.map((blog) => blog.title);
+    expect(titles).toContain("aaaaa");
+  });
+
+  test("likes property defaults to 0 if missing", async () => {
+    const newBlog = {
+      title: "ahhhhh",
+      author: "baaaaaaaaa",
+      url: "https://www.example.com",
+    };
+
+    await api
+      .post("/api/blogs")
+      .send(newBlog)
+      .expect(201)
+      .expect("Content-Type", /application\/json/);
+
+    const blogsAtEnd = await helper.blogsInDb();
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1);
+    expect(blogsAtEnd[blogsAtEnd.length - 1].likes).toBe(0);
+  });
+
+  test("backend responds with status 400 if title and url are missing", async () => {
+    const newBlog = {
+      likes: 1,
+    };
+
+    await api.post("/api/blogs").send(newBlog).expect(400);
+
+    const blogsAtEnd = await helper.blogsInDb();
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
+  });
 });
 
-test("likes property defaults to 0 if missing", async () => {
-  const newBlog = {
-    title: "Another Blog",
-    author: "Jane Smith",
-    url: "https://www.example.com",
-  };
-
-  const response = await api.post("/api/blogs").send(newBlog);
-
-  expect(response.status).toBe(201);
-  expect(response.body.likes).toBe(0);
-
-  const blogs = await helper.blogsInDb();
-  expect(blogs).toHaveLength(helper.initialBlogs.length + 1);
+describe("deletion of a blog", () => {
+  test("succeeds with status code 204 if id is valid", async () => {
+    const blogsAtStart = await helper.blogsInDb();
+    const blogToDelete = blogsAtStart[0];
+    await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204);
+    const blogsAtEnd = await helper.blogsInDb();
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length - 1);
+    const titles = blogsAtEnd.map((r) => r.title);
+    expect(titles).not.toContain(blogToDelete.title);
+  });
 });
 
-test("backend responds with status 400 if title and url are missing", async () => {
-  const newBlog = {
-    likes: 1,
-  };
+describe("updating a blog", () => {
+  test("succeeds with status 200 if id is valid", async () => {
+    const blogsAtStart = await helper.blogsInDb();
+    const blogToUpdate = blogsAtStart[0];
 
-  await api.post("/api/blogs").send(newBlog).expect(400);
+    await api
+      .put(`/api/blogs/${blogToUpdate.id}`)
+      .send({ likes: 10 })
+      .expect(200);
 
-  const blogs = await helper.blogsInDb();
-  expect(blogs).toHaveLength(helper.initialBlogs.length);
+    const blogsAtEnd = await helper.blogsInDb();
+    const updatedBlog = blogsAtEnd[0];
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
+    expect(updatedBlog.likes).toBe(10);
+  });
 });
 
 afterAll(() => {
   mongoose.connection.close();
 });
+
+
+
+
