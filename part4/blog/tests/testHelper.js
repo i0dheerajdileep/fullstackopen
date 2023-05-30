@@ -1,53 +1,40 @@
+// Import the required models
 const Blog = require("../models/blog");
-const user = require('../models/user')
+const User = require("../models/user");
+
+// Define an array of initial blogs
 const initialBlogs = [
   {
-    _id: "5a422a851b54a676234d17f7",
-    title: "My First Blog Post",
-    author: "John Smith",
-    url: "https://myblog.com/first-post",
+    title: "Introduction to JavaScript",
+    author: "John Doe",
+    url: "https://example.com/intro-to-javascript",
     likes: 10,
-    __v: 0,
   },
   {
-    _id: "5a422aa71b54a676234d17f8",
-    title: "JavaScript Tips and Tricks",
-    author: "Jane Doe",
-    url: "https://myblog.com/js-tips",
-    likes: 15,
-    __v: 0,
+    title: "Mastering CSS",
+    author: "Jane Smith",
+    url: "https://example.com/mastering-css",
+    likes: 7,
   },
   {
-    _id: "5a422b3a1b54a676234d17f9",
-    title: "Introduction to Node.js",
-    author: "John Smith",
-    url: "https://myblog.com/nodejs-intro",
-    likes: 8,
-    __v: 0,
+    title: "Python Fundamentals",
+    author: "David Johnson",
+    url: "https://example.com/python-fundamentals",
+    likes: 5,
   },
 ];
 
-const initialUsers = [
-  {
-    username: "hellas",
-    name: "Arto Hellas",
-    id: "627bd77f33e418039572306d",
-  },
-  {
-    username: "mluukkai",
-    name: "Matti Luukkainen",
-    id: "627bd7b233e4180395723071",
-  },
-];
-
+// Function to get all blogs from the database
 const blogsInDb = async () => {
   const blogs = await Blog.find({});
   return blogs.map((blog) => blog.toJSON());
 };
 
+// Function to get all users from the database
 const usersInDb = async () => {
   const users = await User.find({});
   return users.map((user) => user.toJSON());
 };
 
-module.exports = { initialBlogs, initialUsers, blogsInDb, usersInDb };
+// Export the initialBlogs, blogsInDb, and usersInDb variables
+module.exports = { initialBlogs, blogsInDb, usersInDb };
